@@ -1,7 +1,7 @@
-AStar
+AStar - Enhanced Edition
 =====
 
-[![Build Status](https://travis-ci.org/valantonini/AStar.svg?branch=master)](https://travis-ci.org/valantonini/AStar)
+![.NET Core](https://github.com/Radomiej/AStar/workflows/.NET%20Core/badge.svg)
 
 An A Star (A*) algorithm for C# based on [Gustavo Franco's implementation](http://www.codeguru.com/csharp/csharp/cs_misc/designtechniques/article.php/c12527/AStar-A-Implementation-in-C-Path-Finding-PathFinder.htm).
 
