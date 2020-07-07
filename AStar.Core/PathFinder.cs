@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AStar.Core.Utils;
 
 namespace AStar
 {
@@ -90,11 +91,30 @@ namespace AStar
                     }
 
                     //Lets calculate each successors
-                    for (var i = 0; i < _direction.GetLength(0); i++)
+                    int size = _direction.Length;
+                    bool teleportMode = _gridHelper != null && IsTeleportHere(locationX, locationY);
+                    int[,] teleportDirection = null;
+                    if (teleportMode)
                     {
+                        teleportDirection = GetTeleportDirection(locationX, locationY);
+                        size = teleportDirection.GetLength(0);
+                    }
+                    
+                    for (var i = 0; i < size; i++)
+                    {
+                        var newLocationX = 0;
+                        var newLocationY = 0;
                         //unsign incase we went out of bounds
-                        var newLocationX = (ushort)(locationX + _direction[i, 0]);
-                        var newLocationY = (ushort)(locationY + _direction[i, 1]);
+                        if (teleportMode)
+                        {
+                            newLocationX = (ushort) (locationX + teleportDirection[i, 0]);
+                            newLocationY = (ushort) (locationY + teleportDirection[i, 1]);
+                        }
+                        else
+                        {
+                            newLocationX = (ushort) (locationX + _direction[i, 0]);
+                            newLocationY = (ushort) (locationY + _direction[i, 1]);
+                        }
 
                         if (newLocationX >= _gridX || newLocationY >= _gridY)
                         {
@@ -176,6 +196,7 @@ namespace AStar
             }
         }
 
+
         private List<PathFinderNode> OrderClosedListAsPath(Point end)
         {
             _closed.Clear();
@@ -213,6 +234,59 @@ namespace AStar
             _closed.Add(fNode);
 
             return _closed;
+        }
+        
+        private Dictionary<long, int[,]> teleports = new Dictionary<long, int[,]>(100);
+        private Grid _gridHelper;
+        public void AddTeleport(Point start, Point end)
+        {
+            if (_gridHelper == null)
+            {
+                _gridHelper = new Grid(_gridX, _gridY);
+            }
+
+            long startIndex = _gridHelper.GetNodeIndex(start.X, start.Y);
+            long endIndex =  _gridHelper.GetNodeIndex(end.X, end.Y);
+
+            sbyte startOffsetX = (sbyte) (end.X - start.X);
+            sbyte startOffsetY = (sbyte) (end.Y - start.Y);
+            
+            sbyte endOffsetX = (sbyte) (start.X - end.X);
+            sbyte endOffsetY = (sbyte) (start.Y - end.Y);
+            
+            int[,] _startDirection = _options.Diagonals
+                ? new int[,] { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }, { 1, -1 }, { 1, 1 }, { -1, 1 }, { -1, -1 }, {startOffsetX, startOffsetY} }
+                : new int[,] { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }, {startOffsetX, startOffsetY} };
+            
+            int[,] _endDirection = _options.Diagonals
+                ? new int[,] { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }, { 1, -1 }, { 1, 1 }, { -1, 1 }, { -1, -1 }, {endOffsetX, endOffsetY} }
+                : new int[,] { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }, {endOffsetX, endOffsetY} };
+            
+            teleports.Add(startIndex, _startDirection);
+            teleports.Add(endIndex, _endDirection);
+        }
+
+
+        private bool IsTeleportHere(int locationX, int locationY)
+        {
+            long index = _gridHelper.GetNodeIndex(locationX, locationY);
+            return teleports.ContainsKey(index);
+        }
+        
+        private int[,] GetTeleportDirection(int locationX, int locationY)
+        {
+            long index = _gridHelper.GetNodeIndex(locationX, locationY);
+            return teleports[index];
+        }
+        
+        public void ChangeCostOfMove(int x, int y, byte cost)
+        {
+            _grid[x, y] = cost;
+        }
+        
+        public byte GetCostOfMove(int x, int y)
+        {
+            return  _grid[x, y];
         }
     }
 }
