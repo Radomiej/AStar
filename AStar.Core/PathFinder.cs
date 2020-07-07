@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿﻿using System;
 using System.Collections.Generic;
 using AStar.Core.Utils;
 
@@ -91,7 +91,7 @@ namespace AStar
                     }
 
                     //Lets calculate each successors
-                    int size = _direction.Length;
+                    int size = _direction.GetLength(0);
                     bool teleportMode = _gridHelper != null && IsTeleportHere(locationX, locationY);
                     int[,] teleportDirection = null;
                     if (teleportMode)
